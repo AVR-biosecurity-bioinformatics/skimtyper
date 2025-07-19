@@ -18,6 +18,6 @@ Pipeline ideas:
 - Reference alignment with BWA-mem2
 - Alternatively, alignment to just informative positions
 - Extraction of 'genotype-like' data using [`somalier`](https://github.com/brentp/somalier)
-- Relatedness estimation using `somalier`
-- Supervised PCA using `somalier`
+- Relatedness estimation using [`somalier`](https://github.com/brentp/somalier)
+- Supervised PCA using [`somalier`](https://github.com/brentp/somalier)
 - Geographic placement using [`ReLocator`](https://github.com/kr-colab/ReLocator)
