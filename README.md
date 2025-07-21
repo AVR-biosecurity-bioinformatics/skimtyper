@@ -15,6 +15,7 @@ A nextflow-based pipeline for rapid and genotype free relatedness and sample ori
 
 Pipeline ideas:
 - Input read QC and filtering with `fastp`
+- Read accuracy calculation with [`fraguracy'](https://github.com/brentp/fraguracy)
 - Reference alignment with `BWA-mem2`
 - Alternatively, alignment to just informative positions
 - Extraction of 'genotype-like' data using [`somalier`](https://github.com/brentp/somalier)
