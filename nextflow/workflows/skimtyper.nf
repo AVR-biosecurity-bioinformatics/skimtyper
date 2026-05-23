@@ -100,6 +100,7 @@ workflow SKIMTYPER {
     ch_long_bed = INDEX_GENOME.out.long_bed
     ch_short_bed = INDEX_GENOME.out.short_bed
     
+    
     /*
     Process mitochondrial genome and create intervals
     */
@@ -112,6 +113,16 @@ workflow SKIMTYPER {
     ch_mito_indexed = INDEX_MITO.out.fasta_indexed.first()
     ch_mito_bed = INDEX_MITO.out.bed.first()
     
+    /*
+    Process reference VCF
+
+    TODO:
+    - Calculate statistics on reference panel
+    - Extract sitelist
+    - Extract allele frequencies?
+    */
+
+
     /*
     Validate inputs
     */
@@ -135,5 +146,29 @@ workflow SKIMTYPER {
     
     PROCESS_READS.out.perbase
         .set{ ch_read_counts }
+
+
+    // Temporary handling of beds
+
+    // Set to whole genome - TODO: Replace with functionality for just the genotyped sites
+    ch_include_bed = ch_genome_bed
+
+    // TODO: Remove this
+    ch_mask_bed_genotype = ch_mito_bed
+
+    /*
+    Process reads per sample, aligning to the genome, and merging
+    */
+     MPILEUP_CALLING (
+        ch_sample_names,
+        PROCESS_READS.out.cram,
+        ch_genome_indexed,
+        ch_include_bed,
+        ch_mask_bed_genotype,
+        ch_read_counts
+    )
+
+    MPILEUP_CALLING.out.vcf
+        .set{ ch_vcfs }
 
 }
