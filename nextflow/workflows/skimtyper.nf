@@ -3,6 +3,7 @@
 //// import subworkflows
 include { VALIDATE_INPUTS                                           } from '../subworkflows/validate_inputs'
 include { PROCESS_READS                                             } from '../subworkflows/process_reads'
+include { MPILEUP_CALLING                                           } from '../subworkflows/mpileup_calling'
 
 //// import modules
 include { INDEX_GENOME                                              } from '../modules/index_genome' 
