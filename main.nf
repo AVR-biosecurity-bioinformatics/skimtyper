@@ -1,0 +1,97 @@
+#!/usr/bin/env nextflow
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    AVR-biosecurity-bioinformatics/skimtyper
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Github : https://github.com/AVR-biosecurity-bioinformatics/skimtyper
+----------------------------------------------------------------------------------------
+*/
+
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    PRINT PARAMS SUMMARY
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+// include functions from nf-schema
+include { validateParameters; paramsHelp; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema' 
+
+
+// Validate input parameters using schema
+// validateParameters( parameters_schema: 'nextflow_schema.json' )
+
+
+
+///// define functions 
+
+def startupMessage() {
+    log.info pipelineHeader()
+    log.info "~~~ skimtyper: A low-fat nextflow-based pipeline for genotyping low coverage genome sequencing (skim sequencing) data using a reference panel VCF ~~~"
+    log.info " "
+}
+
+def pipelineHeader() {
+    return """                                                                          
+     _______. __  ___  __  .___  ___. .___________.____    ____ .______    _______ .______      
+    /       ||  |/  / |  | |   \/   | |           |\   \  /   / |   _  \  |   ____||   _  \     
+   |   (----`|  '  /  |  | |  \  /  | `---|  |----` \   \/   /  |  |_)  | |  |__   |  |_)  |    
+    \   \    |    <   |  | |  |\/|  |     |  |       \_    _/   |   ___/  |   __|  |      /     
+.----)   |   |  .  \  |  | |  |  |  |     |  |         |  |     |  |      |  |____ |  |\  \----.
+|_______/    |__|\__\ |__| |__|  |__|     |__|         |__|     | _|      |_______|| _| `._____|
+                                                                                                
+    """.stripIndent()
+}
+
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT LOCAL MODULES/SUBWORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+//// workflows
+include { SKIMTYPER                                                   } from './nextflow/workflows/skimtyper'
+
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    RUN MAIN WORKFLOW
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+///// run implicit workflow
+workflow {
+
+    ///// startup messages
+    if( !nextflow.version.matches('=23.05.0-edge') ) {
+        println " "
+        println "*** ERROR ~ This pipeline currently requires Nextflow version 23.05.0-edge -- You are running version ${nextflow.version}. ***"
+        error "*** You can use version 23.05.0-edge by appending 'NXF_VER=23.05.0-edge' to the front of the 'nextflow run' command. ***"
+    }
+
+    startupMessage()
+
+    // Print summary of supplied parameters (that differ from defaults)
+    log.info paramsSummaryLog(workflow)
+
+    workflow.onComplete = {
+        if ( workflow.success ) {
+        log.info "[$workflow.complete] >> Pipeline finished SUCCESSFULLY after $workflow.duration"
+        } else {
+        log.info "[$workflow.complete] >> Pipeline finished with ERRORS after $workflow.duration"
+        }
+    }
+
+    // Print help message, supply typical command line usage for the pipeline
+    if (params.help) {
+        //    log.info startupMessage()
+        log.info paramsHelp("nextflow run AVR-biosecurity-bioinformatics/mimir") // TODO: add typical commands for pipeline
+        exit 0
+    }
+
+
+    ///// run main skimtyper workflow
+    SKIMTYPER ()
+
+}
