@@ -13,7 +13,7 @@ ch_dummy_file = file("$baseDir/assets/dummy_file.txt", checkIfExists: true)
 ch_reports = Channel.empty()
 ch_multiqc_config   = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
 
-workflow SKIMSEQ {
+workflow SKIMTYPER {
 
     /*
     Input channel parsing
