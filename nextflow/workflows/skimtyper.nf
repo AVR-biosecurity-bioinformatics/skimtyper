@@ -142,6 +142,9 @@ workflow SKIMTYPER {
         ch_panel
     )
 
+    PROCESS_PANEL.out.vcf   
+        .set{ ch_sites_to_genotype }
+
     /*
     Validate inputs
     */
@@ -169,12 +172,6 @@ workflow SKIMTYPER {
 
     // Temporary handling of beds
 
-    // Set to whole genome - TODO: Replace with functionality for just the genotyped sites
-    ch_include_bed = ch_genome_bed
-
-    // TODO: Remove this
-    ch_mask_bed_genotype = ch_mito_bed
-
     /*
     Process reads per sample, aligning to the genome, and merging
     */
@@ -182,8 +179,7 @@ workflow SKIMTYPER {
         ch_sample_names,
         PROCESS_READS.out.cram,
         ch_genome_indexed,
-        ch_include_bed,
-        ch_mask_bed_genotype,
+        ch_sites_to_genotype,
         ch_read_counts
     )
 

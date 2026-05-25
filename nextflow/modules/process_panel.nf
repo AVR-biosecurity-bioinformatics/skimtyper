@@ -8,7 +8,7 @@ process PROCESS_PANEL {
     tuple path(vcf), path(vcf_tbi)
     
     output: 
-    tuple path("${outname}.sites.vcf.gz"), path("${outname}.sites.vcf.gz.tbi"),       emit: vcf
+    tuple path("panel.sites.vcf.gz"), path("panel.sites.vcf.gz.tbi"),       emit: vcf
     
     script:
     def process_script = "${process_name}.sh"
@@ -19,8 +19,7 @@ process PROCESS_PANEL {
     bash ${process_script} \
         ${task.cpus} \
         ${task.memory.giga} \
-        "${vcf}" \
-        "${outname}"
+        "${vcf}" 
 
     """
 }
