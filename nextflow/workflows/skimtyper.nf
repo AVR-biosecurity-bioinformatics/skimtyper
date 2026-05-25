@@ -8,6 +8,7 @@ include { MPILEUP_CALLING                                           } from '../s
 //// import modules
 include { INDEX_GENOME                                              } from '../modules/index_genome' 
 include { INDEX_MITO                                                } from '../modules/index_mito'
+include { PROCESS_PANEL                                             } from '../modules/process_panel'
 
 // Create default channels
 ch_dummy_file = file("$baseDir/assets/dummy_file.txt", checkIfExists: true)
@@ -87,6 +88,20 @@ workflow SKIMTYPER {
         ch_genome = Channel.empty()
     } 
     
+
+    // Reference panel channel: VCF + tabix index
+    ch_panel_vcf = Channel.fromPath(
+        params.ref_panel,
+        checkIfExists: true
+    )
+
+    ch_panel_tbi = Channel.fromPath(
+        "${params.ref_panel}.tbi",
+        checkIfExists: true
+    )
+
+    ch_panel = ch_panel_vcf.combine(ch_panel_tbi)
+
     /*
     Process nuclear genome
     */
@@ -123,6 +138,9 @@ workflow SKIMTYPER {
     - Extract allele frequencies?
     */
 
+    PROCESS_PANEL (
+        ch_panel
+    )
 
     /*
     Validate inputs
