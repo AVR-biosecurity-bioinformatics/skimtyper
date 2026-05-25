@@ -7,7 +7,7 @@ process SCATTER_VCF {
 
     input:
     tuple path(vcf), path(tbi)
-    val(counts_per_chunk)
+    val(variants_per_chunk)
 
     output: 
     tuple path("*.vcf.gz"), path("*.vcf.gz.tbi"),    emit: interval_vcf
@@ -22,7 +22,7 @@ process SCATTER_VCF {
         ${task.cpus} \
         ${task.memory.giga} \
         ${vcf} \
-        ${counts_per_chunk} 
+        ${variants_per_chunk} 
 
     """
   

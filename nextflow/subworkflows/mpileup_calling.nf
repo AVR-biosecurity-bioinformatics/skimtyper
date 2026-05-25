@@ -30,13 +30,11 @@ workflow MPILEUP_CALLING {
             def vcfList = (vcfs instanceof List) ? vcfs : [vcfs]
             def tbiList = (tbis instanceof List) ? tbis : [tbis]
 
-            assert vcfList.size() == tbiList.size() :
-
             // emit one tuple per bed file
             (0..<vcfList.size()).collect { i ->
                 def vcf = vcfList[i] as Path
                 def tbiPath = tbiList[i]
-                def base = bed.getFileName().toString()
+                def base = vcf.getFileName().toString()
                 base = base.replaceFirst(/\.gz$/, '')
                 base = base.replaceFirst(/\.vcf$/, '')
                 def interval_hash = base.startsWith('_') ? base.substring(1) : base
@@ -50,9 +48,9 @@ workflow MPILEUP_CALLING {
     ch_sample_cram 
         .combine ( ch_scatter_vcf )
         .map { sample, cram, crai, interval_hash, vcf, tbi -> [ interval_hash, cram, crai ] }
-        .groupTuple ( by: [0,1] )
+        .groupTuple ( by: [0] )
         // join to get back interval_file
-        .join ( ch_scatter_vcf, by: [0,1] )
+        .join ( ch_scatter_vcf, by: [0] )
         // variant type and interval hash columns are combined into a single string for compatibility with mpileup
         .map { interval_hash, cram, crai, vcf, tbi -> tuple(interval_hash, vcf, tbi, cram, crai) }
 	    .set { ch_cram_to_genotype }
