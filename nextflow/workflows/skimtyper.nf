@@ -113,8 +113,6 @@ workflow SKIMTYPER {
 
     ch_genome_indexed = INDEX_GENOME.out.fasta_indexed.first()
     ch_genome_bed = INDEX_GENOME.out.genome_bed
-    ch_long_bed = INDEX_GENOME.out.long_bed
-    ch_short_bed = INDEX_GENOME.out.short_bed
     
     
     /*

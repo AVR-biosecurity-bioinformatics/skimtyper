@@ -6,7 +6,7 @@ process SCATTER_VCF {
     module "BCFtools/1.22-GCC-13.3.0"
 
     input:
-    path(vcf), path(tbi)
+    tuple path(vcf), path(tbi)
     val(counts_per_chunk)
 
     output: 
@@ -22,7 +22,7 @@ process SCATTER_VCF {
         ${task.cpus} \
         ${task.memory.giga} \
         ${vcf} \
-        ${counts_per_chunk} \
+        ${counts_per_chunk} 
 
     """
   

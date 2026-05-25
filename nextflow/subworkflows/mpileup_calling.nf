@@ -4,8 +4,8 @@
 
 //// import modules
 include { MERGE_VCFS                                             } from '../modules/merge_vcfs' 
-include { CREATE_INTERVAL_CHUNKS as CREATE_INTERVAL_CHUNKS_MP    } from '../modules/create_interval_chunks'
 include { MPILEUP                                                } from '../modules/mpileup'
+include { SCATTER_VCF                                            } from '../modules/scatter_vcf'
 
 workflow MPILEUP_CALLING {
 

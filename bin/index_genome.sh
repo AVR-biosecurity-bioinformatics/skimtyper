@@ -4,7 +4,6 @@ set -u
 ## args are the following:
 # $1 = cpus 
 # $2 = ref_genome fasta
-# $3 = chr_min_length
 
 # get directory of ref_fasta file
 REAL_REF_PATH=$( realpath $2 )
@@ -50,11 +49,3 @@ fi
 
 # Create genomic bed file containing all bases
 awk '{print $1"\t0\t"$2}' $2.fai > genome.bed
-
-chr_min_length=$(awk -v x="${3}" 'BEGIN {printf("%d\n",x)}')
-
-# Create bed file just containing long contigs (chromosomes)
-awk -v minlen="$chr_min_length" '{ if($2 >= minlen) print $1 "\t0\t" $2 }' ${2}.fai > long.bed
-
-# Create bed file just containing short contigs (scaffolds)
-awk -v minlen="$chr_min_length" '{ if($2 < minlen) print $1 "\t0\t" $2 }'  ${2}.fai > short.bed
