@@ -3,7 +3,7 @@
 //// import subworkflows
 include { VALIDATE_INPUTS                                           } from '../subworkflows/validate_inputs'
 include { PROCESS_READS                                             } from '../subworkflows/process_reads'
-include { MPILEUP_CALLING                                           } from '../subworkflows/mpileup_calling'
+include { GENOTYPE_WITH_PANEL                                       } from '../subworkflows/genotype_with_panel'
 
 //// import modules
 include { INDEX_GENOME                                              } from '../modules/index_genome' 
@@ -156,7 +156,7 @@ workflow SKIMTYPER {
     /*
     Process reads per sample, aligning to the genome, and merging
     */
-     MPILEUP_CALLING (
+     GENOTYPE_WITH_PANEL (
         ch_sample_names,
         PROCESS_READS.out.cram,
         ch_genome_indexed,
@@ -164,7 +164,7 @@ workflow SKIMTYPER {
         ch_read_counts
     )
 
-    MPILEUP_CALLING.out.vcf
+    GENOTYPE_WITH_PANEL.out.vcf
         .set{ ch_vcfs }
 
 }

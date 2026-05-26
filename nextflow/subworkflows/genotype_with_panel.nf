@@ -9,7 +9,7 @@ include { MPILEUP_SINGLE                                            } from '../m
 include { CONCAT_VCFS                                               } from '../modules/concat_vcfs' 
 include { MERGE_VCFS                                                } from '../modules/merge_vcfs' 
 
-workflow MPILEUP_CALLING {
+workflow GENOTYPE_WITH_PANEL {
 
     take:
     ch_sample_names
@@ -103,7 +103,7 @@ workflow MPILEUP_CALLING {
 
     // Concat chunked VCFs by sample
     MERGE_VCFS.out.vcf
-        .map { sample, interval_hash, vcf, tbi -> tuple("joint", vcf, tbi) }
+        .map { interval_hash, vcf, tbi -> tuple("joint", vcf, tbi) }
         .groupTuple(by: 0)
         .set { ch_vcf_to_concat }
 
