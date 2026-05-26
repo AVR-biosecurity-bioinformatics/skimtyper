@@ -30,17 +30,21 @@ bcftools view -m2 -M2 "${PANEL_VCF}" \
     | bgzip -c > panel.alleles.tsv.gz
 tabix -s1 -b2 -e2 panel.alleles.tsv.gz
 
-## Buid ref panel priors if set
-if [[ "${REF_PANEL_PRIORS:-false}" == "true" ]]; then
-  bcftools view -m2 -M2 "${PANEL_VCF}" \
-    | bcftools query -f'%CHROM\t%POS\t%REF\t%ALT\t%AN\t%AC\n' \
-    | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,($5-$6) "," $6}' \
-    | bgzip -c > panel.prior_freqs.tsv.gz
+## Buid annotation table of AN and AC for ref panel priors
+bcftools query -f'%CHROM\t%POS\t%REF\t%ALT\t%AN\t%AC\n' "${PANEL_VCF}" \
+  | bgzip -c > panel.acan.tsv.gz
+tabix -f -s1 -b2 -e2 panel.acan.tsv.gz
 
-  tabix -f -s1 -b2 -e2 panel.prior_freqs.tsv.gz
-  PRIOR_ARG=(--prior-freqs panel.prior_freqs.tsv.gz)
+cat > panel.acan.hdr <<'EOF'
+##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes from reference panel">
+##INFO=<ID=AC,Number=A,Type=Integer,Description="Alternate allele count from reference panel">
+EOF
+
+# flag to use panel priors or not
+if [[ "${REF_PANEL_PRIORS}" == "false" ]]; then
+  PRIOR_FLAGS="--prior ${MUTATION_RATE}"
 else
-  PRIOR_ARG=(--prior "${MUTATION_RATE}")
+  PRIOR_FLAGS="--prior-freqs AN,AC"
 fi
 
 # Call variants on target sites only with mpleup
@@ -57,6 +61,11 @@ bcftools mpileup \
     --indels-cns \
     --indel-size 110 \
     ${SAMPLE}.cram \
+    | bcftools annotate \
+      -Ou \
+      -a panel.acan.tsv.gz \
+      -h panel.acan.hdr \
+      -c CHROM,POS,REF,ALT,INFO/AN,INFO/AC \
     | bcftools call \
     -Ou \
     -a FORMAT/GP,FORMAT/GQ \
@@ -65,8 +74,8 @@ bcftools mpileup \
     -T panel.alleles.tsv.gz \
     --insert-missed \
     --multiallelic-caller \
-    ${PRIOR_ARG} \
-  | bcftools +setGT \
+    ${PRIOR_FLAGS} \
+    | bcftools +setGT \
     -Ou -- \
     -t q -n . -i 'FMT/DP=0' \
   | bcftools annotate \
