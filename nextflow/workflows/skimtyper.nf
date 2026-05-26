@@ -4,6 +4,7 @@
 include { VALIDATE_INPUTS                                           } from '../subworkflows/validate_inputs'
 include { PROCESS_READS                                             } from '../subworkflows/process_reads'
 include { GENOTYPE_WITH_PANEL                                       } from '../subworkflows/genotype_with_panel'
+include { OUTPUTS                                                   } from '../subworkflows/outputs'
 
 //// import modules
 include { INDEX_GENOME                                              } from '../modules/index_genome' 
@@ -165,6 +166,19 @@ workflow SKIMTYPER {
     )
 
     GENOTYPE_WITH_PANEL.out.vcf
-        .set{ ch_vcfs }
+        .set{ ch_joint_vcf }
 
+
+    /*
+    TODO: Analyse with PLINK
+    */
+
+    /*
+    Outputs
+    */
+
+    OUTPUTS(
+        ch_joint_vcf,
+        ch_sample_pop
+    )
 }
