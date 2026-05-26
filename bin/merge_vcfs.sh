@@ -39,8 +39,8 @@ bcftools merge \
   --force-samples \
   | bcftools +fill-tags \
   -Oz \
-  -o ${OUTNAME}${ext} \
+  -o ${OUTNAME}.merged.${ext} \
   -- -t AC,AN,AF,NS
 
 # Index output
-bcftools index -t --threads ${CPUS} ${OUTNAME}${ext}
+bcftools index -t --threads ${CPUS} ${OUTNAME}.merged.${ext}

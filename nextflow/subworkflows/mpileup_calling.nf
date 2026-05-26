@@ -7,8 +7,7 @@ include { EXTRACT_VCF_SITES                                         } from '../m
 include { SCATTER_VCF                                               } from '../modules/scatter_vcf'
 include { MPILEUP_SINGLE                                            } from '../modules/mpileup_single'
 include { CONCAT_VCFS                                               } from '../modules/concat_vcfs' 
-include { MERGE_VCFS as MERGE_VCFS_NEWSAMPLES                       } from '../modules/merge_vcfs' 
-include { MERGE_VCFS as MERGE_VCF_PANEL                             } from '../modules/merge_vcfs' 
+include { MERGE_VCFS                                                } from '../modules/merge_vcfs' 
 
 workflow MPILEUP_CALLING {
 
@@ -23,7 +22,7 @@ workflow MPILEUP_CALLING {
 
     // Scatter panel vcf into multiple chunks
     SCATTER_VCF (
-        ch_panel,
+        ch_panel.map { outname, vcf, tbi -> tuple(vcf, tbi) },
         params.variants_per_chunk
     )
 
@@ -90,9 +89,21 @@ workflow MPILEUP_CALLING {
         ch_genome_indexed
     )
 
-    // Concat chunked VCFs by sample
+    // Merge new per-sample vcfs into reference panel by chunk
     MPILEUP_SINGLE.out.vcf
-        .map { sample, interval_hash, vcf, tbi -> tuple(sample, vcf, tbi) }
+        .map { sample, interval_hash, vcf, tbi -> tuple(interval_hash, vcf, tbi) }
+        .concat(ch_scatter_vcf)
+        .groupTuple(by: 0)
+        .set { ch_vcf_to_merge }
+
+    MERGE_VCFS (
+        ch_vcf_to_merge,
+        ch_genome_indexed
+    )
+
+    // Concat chunked VCFs by sample
+    MERGE_VCFS.out.vcf
+        .map { sample, interval_hash, vcf, tbi -> tuple("joint", vcf, tbi) }
         .groupTuple(by: 0)
         .set { ch_vcf_to_concat }
 
@@ -100,33 +111,7 @@ workflow MPILEUP_CALLING {
         ch_vcf_to_concat
     )
 
-    // Merge new per-sample vcfs together into a single vcf
-    CONCAT_VCFS.out.vcf
-        .map { sample, vcf, tbi -> tuple("new_samples", vcf, tbi) }
-        .groupTuple(by: 0)
-        .set { ch_vcf_to_merge }
-
-    MERGE_VCFS_NEWSAMPLES (
-        ch_vcf_to_merge,
-        ch_genome_indexed
-    )
-
-    // Merge new vcfs into panel
-
-    // TODO: ITs probably faster to merge vcfs by interval chunk, then concat merged vcfs
-    MERGE_VCFS_NEWSAMPLES.out.vcf
-        .map { sample, vcf, tbi -> tuple(vcf, tbi) }
-        .concat(ch_panel)
-        .map { vcf, tbi -> tuple("joint", vcf, tbi) }
-        .groupTuple(by: 0)
-        .set { ch_vcf_to_merge_panel }
-
-    MERGE_VCF_PANEL (
-        ch_vcf_to_merge_panel,
-        ch_genome_indexed
-    )
-
     emit: 
-    vcf = MERGE_VCF_PANEL.out.vcf
+    vcf = CONCAT_VCFS.out.vcf
 
 }

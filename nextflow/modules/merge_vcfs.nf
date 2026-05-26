@@ -13,7 +13,7 @@ process MERGE_VCFS {
     tuple path(ref_genome), path(genome_index_files)
 
     output: 
-    tuple val(outname),  path("${outname}.{vcf,g.vcf}.gz"), path("${outname}.{vcf,g.vcf}.gz.tbi"),       emit: vcf
+    tuple val(outname),  path("${outname}.merged.{vcf,g.vcf}.gz"), path("${outname}.merged.{vcf,g.vcf}.gz.tbi"),       emit: vcf
     
     script:
     def process_script = "${process_name}.sh"
