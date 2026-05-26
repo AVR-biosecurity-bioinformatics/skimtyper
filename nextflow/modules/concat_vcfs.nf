@@ -1,5 +1,5 @@
-process MERGE_VCFS {
-    def process_name = "merge_vcfs"    
+process CONCAT_VCFS {
+    def process_name = "concat_vcfs"    
     publishDir "${launchDir}/output/modules/${process_name}", mode: 'copy', enabled: "${ params.debug_mode ? true : false }"
 
     // Conditional publishing depending on what the process alias is 
@@ -10,8 +10,7 @@ process MERGE_VCFS {
 
     input:
     tuple val(outname), path(vcf), path(vcf_tbi)
-    tuple path(ref_genome), path(genome_index_files)
-
+    
     output: 
     tuple val(outname),  path("${outname}.{vcf,g.vcf}.gz"), path("${outname}.{vcf,g.vcf}.gz.tbi"),       emit: vcf
     
@@ -27,7 +26,6 @@ process MERGE_VCFS {
     bash ${process_script} \
         ${task.cpus} \
         ${task.memory.giga} \
-        ${ref_genome} \
         "${outname}"
 
     """
