@@ -1,12 +1,12 @@
 /*
-    Genotype samples using GATK
+    Genotype new samples at known sites using mpileup
 */
 
 //// import modules
 include { SCATTER_VCF                                            } from '../modules/scatter_vcf'
 include { MPILEUP_SINGLE                                         } from '../modules/mpileup_single'
 include { CONCAT_VCFS                                            } from '../modules/concat_vcfs' 
-include { MERGE_VCFS                                             } from '../modules/merge_vcfs' 
+include { MERGE_VCFS as MERGE_VCFS_NEWSAMPLES                    } from '../modules/merge_vcfs' 
 
 workflow MPILEUP_CALLING {
 
@@ -94,15 +94,14 @@ workflow MPILEUP_CALLING {
     )
 
     // Merge new per-sample vcfs together into a single vcf
-    MERGE_VCFS.out.vcf
-        .map { sample, vcf, tbi -> tuple("new_sampples", vcf, tbi) }
+    CONCAT_VCFS.out.vcf
+        .map { sample, vcf, tbi -> tuple("new_samples", vcf, tbi) }
         .groupTuple(by: 0)
         .set { ch_vcf_to_merge }
 
     MERGE_VCFS (
-        ch_vcf_to_concat,
+        ch_vcf_to_merge,
         ch_genome_indexed
-    )
 
     emit: 
     vcf = MERGE_VCFS.out.vcf

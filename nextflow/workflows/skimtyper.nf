@@ -9,6 +9,7 @@ include { MPILEUP_CALLING                                           } from '../s
 include { INDEX_GENOME                                              } from '../modules/index_genome' 
 include { INDEX_MITO                                                } from '../modules/index_mito'
 include { PROCESS_PANEL                                             } from '../modules/process_panel'
+include { MERGE_VCFS as MERGE_VCF_PANEL                             } from '../modules/merge_vcfs' 
 
 // Create default channels
 ch_dummy_file = file("$baseDir/assets/dummy_file.txt", checkIfExists: true)
@@ -166,9 +167,6 @@ workflow SKIMTYPER {
     PROCESS_READS.out.perbase
         .set{ ch_read_counts }
 
-
-    // Temporary handling of beds
-
     /*
     Process reads per sample, aligning to the genome, and merging
     */
@@ -182,5 +180,21 @@ workflow SKIMTYPER {
 
     MPILEUP_CALLING.out.vcf
         .set{ ch_vcfs }
+
+
+     /*
+    Merge new vcfs into panel
+    */
+    ch_vcfs
+        .map { sample, vcf, tbi -> tuple(vcf, tbi) }
+        .concat(ch_panel)
+        .map { vcf, tbi -> tuple("joint", vcf, tbi) }
+        .groupTuple(by: 0)
+        .set { ch_vcf_to_merge_panel }
+
+    MERGE_VCF_PANEL (
+        ch_vcf_to_merge,
+        ch_genome_indexed
+    )
 
 }
