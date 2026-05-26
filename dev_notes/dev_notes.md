@@ -1,3 +1,34 @@
+## Create reference panel
+```
+bcftools view \
+  -r CM028320.1:50000-99999 \
+  -Ou \
+  /group/pathogens/IAWS/Personal/Alexp/skimseq_qfly/output/results/vcf/filtered_snp/snp.vcf.gz \
+| bcftools annotate \
+  -Ou \
+  -x INFO,^FORMAT/GT \
+| bcftools +fill-tags \
+  -Oz \
+  -o qfly_panel.CM028320.1_50000_99999.vcf.gz \
+  -- -t AC,AN,AF,NS
+
+
+bcftools view \
+  -r CM028320.1:50000-99999 \
+  -s ^EM3,EM6,F3,F2xM12-F1 \
+  -Ou \
+  /group/pathogens/IAWS/Personal/Alexp/skimseq_qfly/output/results/vcf/filtered_snp/snp.vcf.gz \
+| bcftools annotate \
+  -Ou \
+  -x INFO,^FORMAT/GT \
+| bcftools +fill-tags \
+  -Oz \
+  -o qfly_panel.CM028320.1_50000_99999.notestsamples.vcf.gz \
+  -- -t AC,AN,AF,NS
+
+bcftools index -t qfly_panel.CM028320.1_50000_99999.notestsamples.vcf.gz
+
+```
 
 ## Create Qfly test datasets
 This test data set uses a small segment of Qfly chromosome 1: CM028320.1:50000-99999
