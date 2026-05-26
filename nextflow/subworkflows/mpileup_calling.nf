@@ -4,7 +4,7 @@
 
 //// import modules
 include { MERGE_VCFS                                             } from '../modules/merge_vcfs' 
-include { MPILEUP                                                } from '../modules/mpileup'
+include { MPILEUP_SINGLE                                         } from '../modules/mpileup_single'
 include { SCATTER_VCF                                            } from '../modules/scatter_vcf'
 
 workflow MPILEUP_CALLING {
@@ -17,6 +17,8 @@ workflow MPILEUP_CALLING {
     ch_read_counts
 
     main: 
+
+    // TODO: Should i just do per-sample calling, and force call the alleles NOT USING POP PRIORS
 
     // Scatter sites vcf into multiple chunks
     SCATTER_VCF (
@@ -44,30 +46,44 @@ workflow MPILEUP_CALLING {
         .filter { interval_hash, vcf, tbi -> vcf && tbi.size() > 0 }   // drop empty
         .set { ch_scatter_vcf }
 
+
+    // JOINT CALLING WHOLE COHORT 
+
     // combine sample-level cram with each interval_bed file and interval chunk
-    ch_sample_cram 
-        .combine ( ch_scatter_vcf )
-        .map { sample, cram, crai, interval_hash, vcf, tbi -> [ interval_hash, cram, crai ] }
-        .groupTuple ( by: [0] )
-        // join to get back interval_file
-        .join ( ch_scatter_vcf, by: [0] )
-        // variant type and interval hash columns are combined into a single string for compatibility with mpileup
-        .map { interval_hash, cram, crai, vcf, tbi -> tuple(interval_hash, vcf, tbi, cram, crai) }
-	    .set { ch_cram_to_genotype }
+    //ch_sample_cram 
+    //    .combine ( ch_scatter_vcf )
+    //    .map { sample, cram, crai, interval_hash, vcf, tbi -> [ interval_hash, cram, crai ] }
+    //    .groupTuple ( by: [0] )
+    //    // join to get back interval_file
+    //    .join ( ch_scatter_vcf, by: [0] )
+    //    // variant type and interval hash columns are combined into a single string for compatibility with mpileup
+    //    .map { interval_hash, cram, crai, vcf, tbi -> tuple(interval_hash, vcf, tbi, cram, crai) }
+	//   .set { ch_cram_to_genotype }
 
     // Calculate cohort size for memory scaling
-    ch_cohort_size = ch_sample_names.unique().count()
+    //ch_cohort_size = ch_sample_names.unique().count()
 
     // Call just target sites using mpileup
-    MPILEUP (
-        ch_cram_to_genotype,
-        ch_genome_indexed,
-        ch_cohort_size
-    )
+    //MPILEUP (
+    //    ch_cram_to_genotype,
+    //    ch_genome_indexed,
+    //    ch_cohort_size
+    //)
      
-    // Merge seperate VCFs
-    MPILEUP.out.vcf
-        .map { interval_chunk, interval_bed, bed_tbi, vcf, tbi -> tuple('unfiltered', vcf, tbi) }
+    // SINGLE SAMPLE CALLING
+    ch_sample_cram 
+        .combine ( ch_scatter_vcf )
+        .map { sample, cram, crai, interval_hash, vcf, tbi -> tuple(sample, interval_hash, vcf, tbi, cram, crai) }
+        .set { ch_cram_to_genotype }
+
+    // Call just target sites using mpileup
+    MPILEUP_SINGLE (
+        ch_cram_to_genotype,
+        ch_genome_indexed
+    )
+
+    // Merge seperate VCFs by sample
+    MPILEUP_SINGLE.out.vcf
         .groupTuple(by: 0)
         .set { ch_vcf_to_merge }
 
