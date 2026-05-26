@@ -36,11 +36,11 @@ bcftools merge \
   --threads ${CPUS} \
   ${GVCF_FLAG} \
   --file-list vcf.list \
+  --force-samples \
   | bcftools +fill-tags \
   -Oz \
   -o ${OUTNAME}${ext} \
   -- -t AC,AN,AF,NS
-
 
 # Index output
 bcftools index -t --threads ${CPUS} ${OUTNAME}${ext}

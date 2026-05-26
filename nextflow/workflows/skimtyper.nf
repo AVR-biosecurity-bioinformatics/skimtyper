@@ -8,8 +8,7 @@ include { MPILEUP_CALLING                                           } from '../s
 //// import modules
 include { INDEX_GENOME                                              } from '../modules/index_genome' 
 include { INDEX_MITO                                                } from '../modules/index_mito'
-include { PROCESS_PANEL                                             } from '../modules/process_panel'
-include { MERGE_VCFS as MERGE_VCF_PANEL                             } from '../modules/merge_vcfs' 
+
 
 // Create default channels
 ch_dummy_file = file("$baseDir/assets/dummy_file.txt", checkIfExists: true)
@@ -101,7 +100,10 @@ workflow SKIMTYPER {
         checkIfExists: true
     )
 
-    ch_panel = ch_panel_vcf.combine(ch_panel_tbi)
+    ch_panel_vcf
+        .combine(ch_panel_tbi)
+        .map { vcf, tbi -> tuple("panel", vcf, tbi) }
+        .set{ ch_panel}
 
     /*
     Process nuclear genome
@@ -127,22 +129,6 @@ workflow SKIMTYPER {
     ch_mito_indexed = INDEX_MITO.out.fasta_indexed.first()
     ch_mito_bed = INDEX_MITO.out.bed.first()
     
-    /*
-    Process reference VCF
-
-    TODO:
-    - Calculate statistics on reference panel
-    - Extract sitelist
-    - Extract allele frequencies?
-    */
-
-    PROCESS_PANEL (
-        ch_panel
-    )
-
-    PROCESS_PANEL.out.vcf   
-        .set{ ch_sites_to_genotype }
-
     /*
     Validate inputs
     */
@@ -174,27 +160,11 @@ workflow SKIMTYPER {
         ch_sample_names,
         PROCESS_READS.out.cram,
         ch_genome_indexed,
-        ch_sites_to_genotype,
+        ch_panel,
         ch_read_counts
     )
 
     MPILEUP_CALLING.out.vcf
         .set{ ch_vcfs }
-
-
-     /*
-    Merge new vcfs into panel
-    */
-    ch_vcfs
-        .map { sample, vcf, tbi -> tuple(vcf, tbi) }
-        .concat(ch_panel)
-        .map { vcf, tbi -> tuple("joint", vcf, tbi) }
-        .groupTuple(by: 0)
-        .set { ch_vcf_to_merge_panel }
-
-    MERGE_VCF_PANEL (
-        ch_vcf_to_merge,
-        ch_genome_indexed
-    )
 
 }

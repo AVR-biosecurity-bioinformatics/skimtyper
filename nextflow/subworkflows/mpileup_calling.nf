@@ -3,10 +3,12 @@
 */
 
 //// import modules
-include { SCATTER_VCF                                            } from '../modules/scatter_vcf'
-include { MPILEUP_SINGLE                                         } from '../modules/mpileup_single'
-include { CONCAT_VCFS                                            } from '../modules/concat_vcfs' 
-include { MERGE_VCFS as MERGE_VCFS_NEWSAMPLES                    } from '../modules/merge_vcfs' 
+include { EXTRACT_VCF_SITES                                         } from '../modules/extract_vcf_sites'
+include { SCATTER_VCF                                               } from '../modules/scatter_vcf'
+include { MPILEUP_SINGLE                                            } from '../modules/mpileup_single'
+include { CONCAT_VCFS                                               } from '../modules/concat_vcfs' 
+include { MERGE_VCFS as MERGE_VCFS_NEWSAMPLES                       } from '../modules/merge_vcfs' 
+include { MERGE_VCFS as MERGE_VCF_PANEL                             } from '../modules/merge_vcfs' 
 
 workflow MPILEUP_CALLING {
 
@@ -14,16 +16,14 @@ workflow MPILEUP_CALLING {
     ch_sample_names
     ch_sample_cram
     ch_genome_indexed
-    ch_sites_to_genotype
+    ch_panel
     ch_read_counts
 
     main: 
 
-    // TODO: Should i just do per-sample calling, and force call the alleles NOT USING POP PRIORS
-
-    // Scatter sites vcf into multiple chunks
+    // Scatter panel vcf into multiple chunks
     SCATTER_VCF (
-        ch_sites_to_genotype,
+        ch_panel,
         params.variants_per_chunk
     )
 
@@ -47,6 +47,13 @@ workflow MPILEUP_CALLING {
         .filter { interval_hash, vcf, tbi -> vcf && tbi.size() > 0 }   // drop empty
         .set { ch_scatter_vcf }
 
+    // Extract just sites from panel VCF
+    EXTRACT_VCF_SITES (
+        ch_scatter_vcf
+    )
+
+    EXTRACT_VCF_SITES.out.vcf   
+        .set{ ch_scatter_sites }
 
     // JOINT CALLING WHOLE COHORT 
 
@@ -73,7 +80,7 @@ workflow MPILEUP_CALLING {
      
     // SINGLE SAMPLE CALLING
     ch_sample_cram 
-        .combine ( ch_scatter_vcf )
+        .combine ( ch_scatter_sites )
         .map { sample, cram, crai, interval_hash, vcf, tbi -> tuple(sample, interval_hash, vcf, tbi, cram, crai) }
         .set { ch_cram_to_genotype }
 
@@ -99,11 +106,27 @@ workflow MPILEUP_CALLING {
         .groupTuple(by: 0)
         .set { ch_vcf_to_merge }
 
-    MERGE_VCFS (
+    MERGE_VCFS_NEWSAMPLES (
         ch_vcf_to_merge,
         ch_genome_indexed
+    )
+
+    // Merge new vcfs into panel
+
+    // TODO: ITs probably faster to merge vcfs by interval chunk, then concat merged vcfs
+    MERGE_VCFS_NEWSAMPLES.out.vcf
+        .map { sample, vcf, tbi -> tuple(vcf, tbi) }
+        .concat(ch_panel)
+        .map { vcf, tbi -> tuple("joint", vcf, tbi) }
+        .groupTuple(by: 0)
+        .set { ch_vcf_to_merge_panel }
+
+    MERGE_VCF_PANEL (
+        ch_vcf_to_merge_panel,
+        ch_genome_indexed
+    )
 
     emit: 
-    vcf = MERGE_VCFS.out.vcf
+    vcf = MERGE_VCF_PANEL.out.vcf
 
 }
