@@ -43,6 +43,5 @@ workflow OUTPUTS {
         VCF2DIST.out.mat,
         ch_popmap
     )
-    emit:
-    vcf = ch_final_all.map{ name, vcf, tbi -> tuple( vcf, tbi)}
+
 }
