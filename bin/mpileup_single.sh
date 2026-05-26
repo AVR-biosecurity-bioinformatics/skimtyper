@@ -7,13 +7,13 @@ set -u
 # $3 = ref_genome
 # $4 = sample
 # $5 = interval hash
-# $6 = targets_file
+# $6 = panel_vcf
 
 ## Parse positional input args, the rest are xported
 CPUS="${1}"
 MEM_GB="${2}"
 REF="${3}"
-SAMPLE="${5}"
+SAMPLE="${4}"
 IHASH="${5}"
 PANEL_VCF="${6}"
 
@@ -24,10 +24,29 @@ else
   FILTER_FLAGS="--ns UNMAP,SECONDARY,QCFAIL,DUP"
 fi
 
+ ## Build allele targets: CHROM POS REF,ALT  (tabix indexed)
+bcftools view -m2 -M2 "${PANEL_VCF}" \
+    | bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' \
+    | bgzip -c > panel.alleles.tsv.gz
+tabix -s1 -b2 -e2 panel.alleles.tsv.gz
+
+## Buid ref panel priors if set
+if [[ "${REF_PANEL_PRIORS:-false}" == "true" ]]; then
+  bcftools view -m2 -M2 "${PANEL_VCF}" \
+    | bcftools query -f'%CHROM\t%POS\t%REF\t%ALT\t%AN\t%AC\n' \
+    | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,($5-$6) "," $6}' \
+    | bgzip -c > panel.prior_freqs.tsv.gz
+
+  tabix -f -s1 -b2 -e2 panel.prior_freqs.tsv.gz
+  PRIOR_ARG=(--prior-freqs panel.prior_freqs.tsv.gz)
+else
+  PRIOR_ARG=(--prior "${MUTATION_RATE}")
+fi
+
 # Call variants on target sites only with mpleup
 bcftools mpileup \
+    -Ou \
     --threads ${CPUS} \
-    --bam-list cram.list \
     --max-depth ${MAXDEPTH} \
     --fasta-ref ${REF} \
     --min-BQ ${MINBQ} \
@@ -37,15 +56,16 @@ bcftools mpileup \
     --annotate FORMAT/DP,FORMAT/AD,INFO/AD \
     --indels-cns \
     --indel-size 110 \
+    ${SAMPLE}.cram \
     | bcftools call \
     -Ou \
     -a FORMAT/GP,FORMAT/GQ \
     --ploidy ${PLOIDY} \
     --constrain alleles \
-    --regions-file ${PANEL_VCF} \
+    -T panel.alleles.tsv.gz \
     --insert-missed \
     --multiallelic-caller \
-    --prior ${MUTATION_RATE} \
+    ${PRIOR_ARG} \
   | bcftools +setGT \
     -Ou -- \
     -t q -n . -i 'FMT/DP=0' \

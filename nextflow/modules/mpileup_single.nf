@@ -1,11 +1,11 @@
 process MPILEUP_SINGLE {
-    def process_name = "mpileup"    
+    def process_name = "mpileup_single"    
     publishDir "${launchDir}/output/modules/${process_name}", mode: 'copy', enabled: "${ params.debug_mode ? true : false }"
     // container "jackscanlan/piperline-multi:0.0.1"
-    module "BCFtools/1.21-GCC-13.3.0:BEDTools/2.31.1-GCC-13.3.0:SAMtools/1.22.1-GCC-13.3.0:parallel/20240722-GCCcore-13.3.0"
+    module "BCFtools/1.23.1-GCC-13.3.0"
 
     input:
-    tuple val(sample), val(interval_hash), path(vcf), path(tbi), path(cram), path(cram_index)
+    tuple val(sample), val(interval_hash), path(panel_vcf), path(panel_tbi), path(cram), path(cram_index)
     tuple path(ref_genome), path(genome_index_files)
 
     output: 
@@ -28,9 +28,7 @@ process MPILEUP_SINGLE {
     export MAX_FRAGMENT_LENGTH='${params.max_fragment_length}'
     export MUTATION_RATE='${params.mutation_rate}'
     export MAXDEPTH='${params.max_depth}'
-
-    # Write list of cram files to process
-    printf "%s\n" ${cram} | LC_ALL=C sort -u > cram.list
+    export REF_PANEL_PRIORS='${params.ref_panel_priors}'
 
     ### run process script
     bash ${process_script} \
@@ -39,7 +37,7 @@ process MPILEUP_SINGLE {
         ${ref_genome} \
         ${sample} \
         ${interval_hash} \
-        ${vcf} 
+        ${panel_vcf} 
 
     """
 }

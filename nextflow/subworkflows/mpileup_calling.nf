@@ -84,6 +84,7 @@ workflow MPILEUP_CALLING {
 
     // Merge seperate VCFs by sample
     MPILEUP_SINGLE.out.vcf
+        .map { sample, interval_hash, vcf, tbi -> tuple(sample, vcf, tbi) }
         .groupTuple(by: 0)
         .set { ch_vcf_to_merge }
 
@@ -92,6 +93,6 @@ workflow MPILEUP_CALLING {
     )
 
     emit: 
-    vcf = MPILEUP.out.vcf
+    vcf = MERGE_VCFS.out.vcf
 
 }

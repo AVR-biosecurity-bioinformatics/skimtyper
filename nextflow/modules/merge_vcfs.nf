@@ -3,25 +3,8 @@ process MERGE_VCFS {
     publishDir "${launchDir}/output/modules/${process_name}", mode: 'copy', enabled: "${ params.debug_mode ? true : false }"
 
     // Conditional publishing depending on what the process alias is 
-    publishDir "${launchDir}/output/results/vcf",
-    mode: 'copy',
-    saveAs: { fname ->
-        def p = task.process
+    publishDir "${launchDir}/output/results/vcf", mode: 'copy'
 
-        if( params.output_gvcf?.toString()?.toBoolean() && p.contains('MERGE_GVCFS') )
-        return "gvcf/${fname}"
-
-        if( p.contains('MERGE_UNFILTERED_VCFS') )
-        return "unfiltered/${fname}"
-
-        if( p.contains('MERGE_FILTERED_SITELISTS') )
-        return "filtered_sitelist/${fname}"
-
-        if( p.contains('MERGE_FINAL') )
-        return "filtered/${fname}"
-        
-        return null
-    }
 
     module "GATK/4.6.1.0-GCCcore-13.3.0-Java-21:BCFtools/1.21-GCC-13.3.0"
 
