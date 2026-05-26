@@ -2,31 +2,46 @@
 ```
 bcftools view \
   -r CM028320.1:50000-99999 \
-  -Ou \
-  /group/pathogens/IAWS/Personal/Alexp/skimseq_qfly/output/results/vcf/filtered_snp/snp.vcf.gz \
-| bcftools annotate \
-  -Ou \
-  -x INFO,^FORMAT/GT \
-| bcftools +fill-tags \
+  -s ^EM3,EM6,F3,F2xM12-F1 \
   -Oz \
-  -o qfly_panel.CM028320.1_50000_99999.vcf.gz \
-  -- -t AC,AN,AF,NS
+  -o subset.tmp.vcf.gz \
+  /group/pathogens/IAWS/Personal/Alexp/skimseq_qfly/output/results/vcf/filtered_snp/snp.vcf.gz
+
+bcftools index -t subset.tmp.vcf.gz
+
+
+bcftools query -f'[%SAMPLE\t%GT\n]' subset.tmp.vcf.gz \
+| awk '
+BEGIN { OFS="\t" }
+{
+    total[$1]++
+    if ($2=="./." || $2==".|.") missing[$1]++
+}
+END {
+    for (s in total) {
+        miss = (s in missing ? missing[s] : 0)
+        frac = miss / total[s]
+        print s, frac, miss, total[s]
+    }
+}' \
+| sort -k2,2nr > sample_missingness.tsv
+
+awk '$2 > 0.9 {print $1}' sample_missingness.tsv > drop.missing90.samples.txt
 
 
 bcftools view \
-  -r CM028320.1:50000-99999 \
-  -s ^EM3,EM6,F3,F2xM12-F1 \
+  -S ^drop.missing90.samples.txt \
   -Ou \
-  /group/pathogens/IAWS/Personal/Alexp/skimseq_qfly/output/results/vcf/filtered_snp/snp.vcf.gz \
+  subset.tmp.vcf.gz \
 | bcftools annotate \
   -Ou \
   -x INFO,^FORMAT/GT \
 | bcftools +fill-tags \
   -Oz \
-  -o qfly_panel.CM028320.1_50000_99999.notestsamples.vcf.gz \
+  -o qfly_panel.CM028320.1_50000_99999.filtered.vcf.gz \
   -- -t AC,AN,AF,NS
 
-bcftools index -t qfly_panel.CM028320.1_50000_99999.notestsamples.vcf.gz
+bcftools index -t qfly_panel.CM028320.1_50000_99999.filtered.vcf.gz
 
 ```
 
