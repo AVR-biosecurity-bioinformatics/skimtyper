@@ -16,6 +16,7 @@ REF="${3}"
 SAMPLE="${4}"
 IHASH="${5}"
 PANEL_VCF="${6}"
+CRAM="${7}"
 
 # set up bcftools filter flags
 if [[ "${RMDUP}" == "false" ]]; then
@@ -60,7 +61,7 @@ bcftools mpileup \
     --annotate FORMAT/DP,FORMAT/AD,INFO/AD \
     --indels-cns \
     --indel-size 110 \
-    ${SAMPLE}.cram \
+    ${CRAM} \
     | bcftools annotate \
       -Ou \
       -a panel.acan.tsv.gz \
@@ -78,9 +79,10 @@ bcftools mpileup \
     | bcftools +setGT \
     -Ou -- \
     -t q -n . -i 'FMT/DP=0' \
-  | bcftools annotate \
-    --threads "${CPUS}" \
-    --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' \
+    | bcftools annotate \
+    -Ou \
+    -a "${PANEL_VCF}" \
+    -c CHROM,POS,REF,ALT,ID \
     -Oz9 -o "${SAMPLE}.${IHASH}.vcf.gz"
 
 # index output

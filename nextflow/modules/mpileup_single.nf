@@ -37,7 +37,8 @@ process MPILEUP_SINGLE {
         ${ref_genome} \
         ${sample} \
         ${interval_hash} \
-        ${panel_vcf} 
+        ${panel_vcf} \
+        ${cram}
 
     """
 }

@@ -151,3 +151,64 @@ module load Java/17
 nextflow run . -profile debug,test -resume
 
 ```
+
+
+# Test aquilonis
+
+```
+cd /group/pathogens/IAWS/Personal/Alexp/skimtyper
+
+ml BCFtools/1.23.1-GCC-13.3.0
+
+awk 'NR>1 {print $1}' popmap_ref.tsv > samples_to_keep.txt
+
+
+bcftools view \
+    --threads 8 \
+    -S samples_to_keep.txt \
+    -Ou \
+  /group/pathogens/IAWS/Personal/Alexp/skimseq_qfly/vcf_in_sitelist.vcf.gz \
+  | bcftools annotate \
+  -Ou \
+  -x INFO,^FORMAT/GT \
+| bcftools +fill-tags \
+  -Oz \
+  -o qfly_ref_panel.vcf.gz \
+  -- -t AC,AN,AF,NS
+
+bcftools index -t qfly_ref_panel.vcf.gz
+
+
+
+# One or more FASTQ roots:
+fqroots=(
+  /group/pathogens/IAWS/Projects/Tephritid/Skim/fastq
+  /group/sequencing/MGI/250723_V350314028/Project_PATHOGENS
+  /group/sequencing/MGI/V350246164/Project_PATHOGENS
+  /group/sequencing/MGI/V350246099/L04
+  /group/sequencing/MGI/251127_R2130410240006_V350358133/Project_PATHOGENS
+  /group/sequencing/MGI/250918_R2130410240006_V350353273/Project_PATHOGENS
+  /group/sequencing/MGI/260129_R2130410240006_V350384689/Project_PATHOGENS
+  )
+  
+out=sample_sheet.csv
+printf "sample,pop,fwd,rev\n" > sample_sheet.csv
+
+# read popmap (skip header)
+tail -n +2 popmap_perth.tsv | while IFS=$'\t' read -r sample pop; do
+  # Find all matching R1 files across ALL roots (NUL-delimited for safety)
+  while IFS= read -r -d '' fwd; do
+    rev="${fwd/_R1_/_R2_}"
+    if [[ ! -f "$rev" ]]; then
+      printf 'WARN: missing R2 for %s (%s)\n' "$sample" "$fwd" >&2
+      continue
+    fi
+    printf "%s,%s,%s,%s\n" "$sample" "$pop" "$fwd" "$rev" >> "$out"
+  done < <(
+    # Adjust the name patterns to your naming scheme
+    find "${fqroots[@]}" -maxdepth 3 -type f -name '*.fastq.gz' \
+         -name '*_R1_*' -name "*${sample}_*" -print0 \
+    | sort -z -u
+  )
+done
+```
