@@ -73,11 +73,6 @@ workflow SKIMTYPER {
         .unique()
         .set { ch_sample_names }
 
-    // Sample names and pops channel
-    ch_samplesheet_parsed
-        .map { sample, lib, pop, r1, r2 -> tuple(sample, pop) }
-        .set { ch_sample_pop }
-
     // Reference genome channel
     if ( params.ref_genome ){
         ch_genome = Channel
@@ -105,6 +100,42 @@ workflow SKIMTYPER {
         .combine(ch_panel_tbi)
         .map { vcf, tbi -> tuple("panel", vcf, tbi) }
         .set{ ch_panel}
+
+    // Reference panel samplesheet
+    ch_ref_samplesheet = Channel
+        .fromPath (
+            params.ref_panel_samplesheet,
+            checkIfExists: true
+        )
+        .splitCsv(header: true)
+        .map { row ->
+            // Fail early if required columns are missing
+            def required = ['sample','pop']
+            def present  = row.keySet()*.toString() as Set
+            def missing  = required.findAll { !(it in present) }
+            if( missing ) {
+                error "Samplesheet is missing required columns: ${missing.join(', ')}. " +
+                    "Found columns: ${present.toList().sort().join(', ')}"
+            }
+
+            // Parse samplesheet columns
+            def sample = row.sample.toString().trim()
+            def pop    = row.pop.toString().trim().replaceAll(/\s+/, '_')
+
+            // Fail early if any sample names less than 3 characters
+            if( sample.size() < 3 ) {
+                error "Invalid sample name '${sample}' in samplesheet. " +
+                    "Sample names must be at least 3 characters long because bcftools +fill-tags fails on 2-character sample IDs."
+            }
+            tuple(sample, pop)
+        }
+
+    // Sample names and pops channel (combined query, ref)
+    ch_samplesheet_parsed
+        .map { sample, lib, pop, r1, r2 -> tuple(sample, pop) }
+        .concat(ch_ref_samplesheet)
+        .unique()
+        .set { ch_sample_pop }
 
     /*
     Process nuclear genome
