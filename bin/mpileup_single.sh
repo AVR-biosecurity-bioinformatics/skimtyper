@@ -8,6 +8,7 @@ set -u
 # $4 = sample
 # $5 = interval hash
 # $6 = panel_vcf
+# $7 = cram
 
 ## Parse positional input args, the rest are xported
 CPUS="${1}"
@@ -32,13 +33,14 @@ bcftools view -m2 -M2 "${PANEL_VCF}" \
 tabix -s1 -b2 -e2 panel.alleles.tsv.gz
 
 ## Buid annotation table of AN and AC for ref panel priors
-bcftools query -f'%CHROM\t%POS\t%REF\t%ALT\t%AN\t%AC\n' "${PANEL_VCF}" \
+bcftools query -f'%CHROM\t%POS\t%REF\t%ALT\t%AN\t%AC\t%ID\n' "${PANEL_VCF}" \
   | bgzip -c > panel.acan.tsv.gz
 tabix -f -s1 -b2 -e2 panel.acan.tsv.gz
 
 cat > panel.acan.hdr <<'EOF'
 ##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes from reference panel">
 ##INFO=<ID=AC,Number=A,Type=Integer,Description="Alternate allele count from reference panel">
+##INFO=<ID=PANEL_ID,Number=1,Type=String,Description="Reference panel SNP ID">
 EOF
 
 # flag to use panel priors or not
@@ -51,38 +53,34 @@ fi
 # Call variants on target sites only with mpleup
 bcftools mpileup \
     -Ou \
-    --threads ${CPUS} \
-    --max-depth ${MAXDEPTH} \
-    --fasta-ref ${REF} \
-    --min-BQ ${MINBQ} \
-    --min-MQ ${MINMQ} \
-    --regions-file ${PANEL_VCF} \
+    --threads "${CPUS}" \
+    --max-depth "${MAXDEPTH}" \
+    --fasta-ref "${REF}" \
+    --min-BQ "${MINBQ}" \
+    --min-MQ "${MINMQ}" \
+    --regions-file "${PANEL_VCF}" \
     ${FILTER_FLAGS} \
     --annotate FORMAT/DP,FORMAT/AD,INFO/AD \
     --indels-cns \
     --indel-size 110 \
-    ${CRAM} \
-    | bcftools annotate \
-      -Ou \
-      -a panel.acan.tsv.gz \
-      -h panel.acan.hdr \
-      -c CHROM,POS,REF,ALT,INFO/AN,INFO/AC \
-    | bcftools call \
+    "${CRAM}" \
+| bcftools call \
     -Ou \
     -a FORMAT/GP,FORMAT/GQ \
-    --ploidy ${PLOIDY} \
+    -A \
+    --ploidy "${PLOIDY}" \
     --constrain alleles \
     -T panel.alleles.tsv.gz \
     --insert-missed \
     --multiallelic-caller \
     ${PRIOR_FLAGS} \
-    | bcftools +setGT \
+| bcftools +setGT \
     -Ou -- \
     -t q -n . -i 'FMT/DP=0' \
-    | bcftools annotate \
-    -Ou \
-    -a "${PANEL_VCF}" \
-    -c CHROM,POS,REF,ALT,ID \
+| bcftools annotate \
+    -a panel.acan.tsv.gz \
+    -h panel.acan.hdr \
+    -c CHROM,POS,REF,ALT,INFO/AN,INFO/AC,ID \
     -Oz9 -o "${SAMPLE}.${IHASH}.vcf.gz"
 
 # index output
