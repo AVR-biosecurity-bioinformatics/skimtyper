@@ -1,49 +1,4 @@
-## Create reference panel
-```
-bcftools view \
-  -r CM028320.1:50000-99999 \
-  -s ^EM3,EM6,F3,F2xM12-F1 \
-  -Oz \
-  -o subset.tmp.vcf.gz \
-  /group/pathogens/IAWS/Personal/Alexp/skimseq_qfly/output/results/vcf/filtered_snp/snp.vcf.gz
 
-bcftools index -t subset.tmp.vcf.gz
-
-
-bcftools query -f'[%SAMPLE\t%GT\n]' subset.tmp.vcf.gz \
-| awk '
-BEGIN { OFS="\t" }
-{
-    total[$1]++
-    if ($2=="./." || $2==".|.") missing[$1]++
-}
-END {
-    for (s in total) {
-        miss = (s in missing ? missing[s] : 0)
-        frac = miss / total[s]
-        print s, frac, miss, total[s]
-    }
-}' \
-| sort -k2,2nr > sample_missingness.tsv
-
-awk '$2 > 0.9 {print $1}' sample_missingness.tsv > drop.missing90.samples.txt
-
-
-bcftools view \
-  -S ^drop.missing90.samples.txt \
-  -Ou \
-  subset.tmp.vcf.gz \
-| bcftools annotate \
-  -Ou \
-  -x INFO,^FORMAT/GT \
-| bcftools +fill-tags \
-  -Oz \
-  -o qfly_panel.CM028320.1_50000_99999.filtered.vcf.gz \
-  -- -t AC,AN,AF,NS
-
-bcftools index -t qfly_panel.CM028320.1_50000_99999.filtered.vcf.gz
-
-```
 
 ## Create Qfly test datasets
 This test data set uses a small segment of Qfly chromosome 1: CM028320.1:50000-99999
@@ -94,6 +49,93 @@ pop=$(echo -e "Pop1\nPop1\nPop2\nPop3")
 # format sample,fastq_1,fastq_2,
 paste -d ',' <(echo "sample_id") <(echo "pop") <(echo "fwd") <(echo "rev") > test_data/qfly/test_samplesheet.csv
 paste -d ',' <(echo "$sample_id") <(echo "$pop")  <(echo "$fwd") <(echo "$rev") >> test_data/qfly/test_samplesheet.csv
+```
+
+## Create reference panel
+
+NOTE: Panel coordinates need to be lifted over to subset reference genome
+```
+INVCF="/group/pathogens/IAWS/Personal/Alexp/skimseq_qfly/output/results/vcf/filtered_snp/snp.vcf.gz"
+REGION="CM028320.1:50000-99999"
+CONTIG="CM028320.1"
+START=50000
+OUT_PREFIX="qfly_panel.CM028320.1_50000_99999.filtered"
+
+SUBSET_REF="test_data/qfly/test_qfly_genome.fa"
+
+# 1) Extract region and drop explicitly named samples
+bcftools view \
+  -r "${REGION}" \
+  -s ^EM3,EM6,F3,F2xM12-F1 \
+  -Oz \
+  -o subset.tmp.vcf.gz \
+  "${INVCF}"
+
+bcftools index -t subset.tmp.vcf.gz
+
+# 2) Compute per-sample missingness on this subset
+bcftools query -f'[%SAMPLE\t%GT\n]' subset.tmp.vcf.gz \
+| awk '
+BEGIN { OFS="\t" }
+{
+    total[$1]++
+    if ($2 ~ /\./) missing[$1]++
+}
+END {
+    for (s in total) {
+        miss = (s in missing ? missing[s] : 0)
+        frac = miss / total[s]
+        print s, frac, miss, total[s]
+    }
+}' \
+| sort -k2,2nr > sample_missingness.tsv
+
+# 3) Drop samples with >90% missing in this subset
+awk '$2 > 0.9 {print $1}' sample_missingness.tsv > drop.missing90.samples.txt
+
+# 4) Build minimal filtered panel in ORIGINAL genome coordinates first
+bcftools view \
+  -S ^drop.missing90.samples.txt \
+  -Ou \
+  subset.tmp.vcf.gz \
+| bcftools annotate \
+  -Ou \
+  -x INFO,^FORMAT/GT \
+| bcftools +fill-tags \
+  -Oz \
+  -o "${OUT_PREFIX}.origcoords.vcf.gz" \
+  -- -t AC,AN,AF,NS
+
+bcftools index -t "${OUT_PREFIX}.origcoords.vcf.gz"
+
+# 5) Lift panel positions to SUBSET-reference coordinates
+#    new_POS = old_POS - START + 1
+bcftools view "${OUT_PREFIX}.origcoords.vcf.gz" \
+| awk -v contig="${CONTIG}" -v start="${START}" 'BEGIN{OFS="\t"}
+/^##/ { print; next }
+/^#CHROM/ { print; next }
+{
+    if ($1 == contig) {
+        $2 = $2 - start + 1
+    }
+    print
+}' \
+| bgzip -c > "${OUT_PREFIX}.subsetcoords.vcf.gz"
+
+bcftools index -t "${OUT_PREFIX}.subsetcoords.vcf.gz"
+
+# 6) Update contig lengths/header to match the subset FASTA
+#    (only if you will call/merge against the subset reference)
+samtools faidx "${SUBSET_REF}"
+
+bcftools reheader \
+  -f "${SUBSET_REF}.fai" \
+  -o panel.vcf.gz \
+  "${OUT_PREFIX}.subsetcoords.vcf.gz"
+
+bcftools index -t panel.vcf.gz
+
+
 ```
 
 ### Run test datasets
