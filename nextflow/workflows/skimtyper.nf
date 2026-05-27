@@ -51,12 +51,6 @@ workflow SKIMTYPER {
             def r1     = file(row.fwd, checkIfExists: true)
             def r2     = file(row.rev, checkIfExists: true)
 
-            // Fail early if any sample names less than 3 characters
-            if( sample.size() < 3 ) {
-                error "Invalid sample name '${sample}' in samplesheet. " +
-                    "Sample names must be at least 3 characters long because bcftools +fill-tags fails on 2-character sample IDs."
-            }
-
             def lib = r1.getName().replaceFirst(/\.(fastq|fq)\.gz$/, '')
             tuple(sample, lib, pop, r1, r2)
         }
@@ -121,12 +115,6 @@ workflow SKIMTYPER {
             // Parse samplesheet columns
             def sample = row.sample.toString().trim()
             def pop    = row.pop.toString().trim().replaceAll(/\s+/, '_')
-
-            // Fail early if any sample names less than 3 characters
-            if( sample.size() < 3 ) {
-                error "Invalid sample name '${sample}' in samplesheet. " +
-                    "Sample names must be at least 3 characters long because bcftools +fill-tags fails on 2-character sample IDs."
-            }
             tuple(sample, pop)
         }
 
