@@ -1,5 +1,5 @@
 process PLINK_KING {
-    def process_name = "plink_KING"    
+    def process_name = "plink_king"    
     // tag "-"
     publishDir "${launchDir}/output/modules/${process_name}", mode: 'copy', enabled: "${ params.debug_mode ? true : false }"
     publishDir "${launchDir}/output/results/plink", mode: 'copy'
