@@ -7,10 +7,10 @@ process PLINK_PCA {
     module "PLINK/2.00a3.7-gfbf-2024a"
 
     input:
-    path(plinkfiles)
+    tuple val(outname), path(plinkfiles)
 
     output: 
-    path("*.pca*"),                           emit: pca
+    tuple val(outname), path("*.pca*"),                           emit: pca
     
     script:
     def process_script = "${process_name}.sh"
@@ -25,11 +25,12 @@ process PLINK_PCA {
     export LD_WINSIZE='${params.ld_winsize}'
     export LD_STEPSIZE='${params.ld_stepsize}'
     export LD_THRESHOLD='${params.ld_threshold}'
+    export PLINK_NUM_PC='${params.plink_num_pc}'
 
     ### run process script
     bash ${process_script} \
         ${task.cpus} \
-        ${task.memory.giga} \
+        ${task.memory.mega} \
         "${outname}"
     """
 }

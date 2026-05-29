@@ -11,8 +11,8 @@ set -u
 plink2 \
     --threads ${1} \
     --memory ${2} \
-    --vcf ${3} \
+    --vcf ${4} \
     --allow-extra-chr \
     --double-id \
     --make-bed \
-    --out ${2}
+    --out ${3}

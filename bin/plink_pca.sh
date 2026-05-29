@@ -9,8 +9,8 @@ set -u
 # First apply filters
 plink2 \
     --threads ${1} \
-    --mem ${2} \
-    --bfile ${outname} \
+    --memory ${2} \
+    --bfile ${3} \
     --snps-only just-acgt \
     --max-alleles 2 \
     --mac ${MIN_MAC} \
@@ -19,23 +19,23 @@ plink2 \
     --mind ${SAMPLE_MAX_MISSING} \
     --allow-extra-chr \
     --make-bed \
-    --out ${outname}.filtered
+    --out ${3}.filtered
 
 # Then LD prune
 plink2 \
     --threads ${1} \
-    --mem ${2} \
-    --bfile ${outname}.filtered \
+    --memory ${2} \
+    --bfile ${3}.filtered \
     --allow-extra-chr \
     --indep-pairwise ${LD_WINSIZE} ${LD_STEPSIZE} ${LD_THRESHOLD} \
-    --out ${outname}.pruned
+    --out ${3}.filtered
 
 # Then run PCA on filtered and pruned snps
 plink2 \
     --threads ${1} \
-    --mem ${2} \
-    --bfile ${outname}.filtered \
-    --extract ${outname}.filtered.prune.in \
+    --memory ${2} \
+    --bfile ${3}.filtered \
+    --extract ${3}.filtered.prune.in \
     --allow-extra-chr \
-    --pca 10 \
-    --out ${outname}.pca
+    --pca ${PLINK_NUM_PC} \
+    --out ${3}.pca

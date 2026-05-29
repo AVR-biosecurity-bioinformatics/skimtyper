@@ -10,7 +10,7 @@ process PLINK_IMPORT {
     tuple val(outname), path(vcf), path(vcf_tbi)
 
     output: 
-    path("${outname}.{bim,bed,fam}"),                           emit: plink
+    tuple val(outname), path("${outname}.{bim,bed,fam}"),                           emit: plink
     
     script:
     def process_script = "${process_name}.sh"
@@ -20,7 +20,7 @@ process PLINK_IMPORT {
     ### run process script
     bash ${process_script} \
         ${task.cpus} \
-        ${task.memory.giga} \
+        ${task.memory.mega} \
         "${outname}" \
         ${vcf}
     """
