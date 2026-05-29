@@ -18,8 +18,6 @@ process MPILEUP_SINGLE {
     
     # Export Mpileup parameters
     export RMDUP='${params.rmdup}'
-    export EXCLUDE_PAD='${params.exclude_padding}'
-    export OUTPUT_INVARIANT='${params.output_invariant}'
     export PLOIDY='${params.ploidy}'
     export MINBQ='${params.minbq}'
     export MINMQ='${params.minmq}'

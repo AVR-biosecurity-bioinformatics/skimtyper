@@ -8,7 +8,6 @@ include { MAP_TO_GENOME                         } from '../modules/map_to_genome
 include { SPLIT_FASTQ                           } from '../modules/split_fastq'
 include { MERGE_CRAM                            } from '../modules/merge_cram'
 include { STAGE_CRAM                            } from '../modules/stage_cram'
-include { COUNT_CRAM_PERBASE                    } from '../modules/count_cram_perbase'
 
 workflow PROCESS_READS {
 
@@ -141,19 +140,8 @@ workflow PROCESS_READS {
     STAGE_CRAM(
         ch_sample_cram
     )
-
-    // Count per-base depths in cram, used for masking and creating interval chunks
-    COUNT_CRAM_PERBASE (
-        STAGE_CRAM.out.cram,
-        ch_genome_indexed,
-        params.rmdup,
-        params.minbq,
-        params.minmq
-    )
-
     emit: 
     cram = STAGE_CRAM.out.cram
-    perbase = COUNT_CRAM_PERBASE.out.perbase
 
 }
 

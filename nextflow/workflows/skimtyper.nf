@@ -169,9 +169,6 @@ workflow SKIMTYPER {
         VALIDATE_INPUTS.out.rg_to_validate,
         ch_genome_indexed
     )
-    
-    PROCESS_READS.out.perbase
-        .set{ ch_read_counts }
 
     /*
     Process reads per sample, aligning to the genome, and merging
@@ -180,13 +177,11 @@ workflow SKIMTYPER {
         ch_sample_names,
         PROCESS_READS.out.cram,
         ch_genome_indexed,
-        ch_panel,
-        ch_read_counts
+        ch_panel
     )
 
     GENOTYPE_WITH_PANEL.out.vcf
         .set{ ch_joint_vcf }
-
 
     /*
     TODO: Analyse with PLINK

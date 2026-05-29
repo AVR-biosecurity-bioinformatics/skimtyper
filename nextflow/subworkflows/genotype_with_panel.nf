@@ -16,7 +16,6 @@ workflow GENOTYPE_WITH_PANEL {
     ch_sample_cram
     ch_genome_indexed
     ch_panel
-    ch_read_counts
 
     main: 
 
