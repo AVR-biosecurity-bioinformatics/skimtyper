@@ -21,21 +21,12 @@ plink2 \
     --make-bed \
     --out ${3}.filtered
 
-# Then LD prune
+# Then create king table
 plink2 \
     --threads ${1} \
     --memory ${2} \
     --bfile ${3}.filtered \
     --allow-extra-chr \
-    --indep-pairwise ${LD_WINSIZE} ${LD_STEPSIZE} ${LD_THRESHOLD} \
-    --out ${3}.filtered
+    --make-king-table \
+    --out ${3}.king
 
-# Then run PCA on filtered and pruned snps
-plink2 \
-    --threads ${1} \
-    --memory ${2} \
-    --bfile ${3}.filtered \
-    --extract ${3}.filtered.prune.in \
-    --allow-extra-chr \
-    --make-rel square gz \
-    --out ${3}

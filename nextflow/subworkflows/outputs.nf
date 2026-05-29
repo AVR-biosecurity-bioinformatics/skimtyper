@@ -9,6 +9,7 @@ include { PLOT_TREE                                              } from '../modu
 include { PLINK_IMPORT                                           } from '../modules/plink_import' 
 include { PLINK_PCA                                              } from '../modules/plink_pca' 
 include { PLINK_REL                                              } from '../modules/plink_rel' 
+include { PLINK_KING                                             } from '../modules/plink_king' 
 
 workflow OUTPUTS {
 
@@ -38,8 +39,13 @@ workflow OUTPUTS {
         PLINK_IMPORT.out.plink
     )   
 
-    // Rreate relationship matrix from plink bed
+    // Create relationship matrix from plink bed
     PLINK_REL (
+        PLINK_IMPORT.out.plink
+    )   
+    
+    // Create KING relationship matrix from plink bed
+    PLINK_KING (
         PLINK_IMPORT.out.plink
     )   
 
