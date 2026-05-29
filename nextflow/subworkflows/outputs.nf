@@ -8,6 +8,7 @@ include { PLOT_ORDINATION                                        } from '../modu
 include { PLOT_TREE                                              } from '../modules/plot_tree' 
 include { PLINK_IMPORT                                           } from '../modules/plink_import' 
 include { PLINK_PCA                                              } from '../modules/plink_pca' 
+include { PLINK_REL                                              } from '../modules/plink_rel' 
 
 workflow OUTPUTS {
 
@@ -32,8 +33,13 @@ workflow OUTPUTS {
         ch_vcf
     )
 
-    // Run PLINK PCA
+    // Run PCA on plink bed
     PLINK_PCA (
+        PLINK_IMPORT.out.plink
+    )   
+
+    // Rreate relationship matrix from plink bed
+    PLINK_REL (
         PLINK_IMPORT.out.plink
     )   
 
