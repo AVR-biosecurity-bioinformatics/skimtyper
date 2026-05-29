@@ -1,5 +1,5 @@
-process PLINK_IMPORT {
-    def process_name = "plink_import"    
+process PLINK_PCA {
+    def process_name = "plink_pca"    
     // tag "-"
     publishDir "${launchDir}/output/modules/${process_name}", mode: 'copy', enabled: "${ params.debug_mode ? true : false }"
     publishDir "${launchDir}/output/results/plink", mode: 'copy'

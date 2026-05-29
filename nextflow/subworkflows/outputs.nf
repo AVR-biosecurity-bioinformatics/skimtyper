@@ -6,6 +6,8 @@
 include { VCF2DIST                                               } from '../modules/vcf2dist' 
 include { PLOT_ORDINATION                                        } from '../modules/plot_ordination' 
 include { PLOT_TREE                                              } from '../modules/plot_tree' 
+include { PLINK_IMPORT                                           } from '../modules/plink_import' 
+include { PLINK_PCA                                              } from '../modules/plink_pca' 
 
 workflow OUTPUTS {
 
@@ -23,6 +25,17 @@ workflow OUTPUTS {
     VCF2DIST (
         ch_vcf
     )
+
+
+    // Import PLINK file
+    PLINK_IMPORT (
+        ch_vcf
+    )
+
+    // Run PLINK PCA
+    PLINK_PCA (
+        PLINK_IMPORT.out.plink
+    )   
 
     // Turn ch_sample_pop tuples into a 2‑col TSV 'popmap' file
     ch_sample_pop
