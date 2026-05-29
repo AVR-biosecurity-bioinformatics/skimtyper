@@ -5,7 +5,6 @@ set -u
 # $1 = cpus 
 # $2 = mem
 # $3 = outname
-# $4 = vcf
 
 # First apply filters
 plink2 \

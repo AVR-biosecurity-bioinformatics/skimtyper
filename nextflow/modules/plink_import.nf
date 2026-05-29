@@ -20,6 +20,7 @@ process PLINK_IMPORT {
     ### run process script
     bash ${process_script} \
         ${task.cpus} \
+        ${task.memory.giga} \
         "${outname}" \
         ${vcf}
     """

@@ -29,6 +29,7 @@ process PLINK_PCA {
     ### run process script
     bash ${process_script} \
         ${task.cpus} \
+        ${task.memory.giga} \
         "${outname}"
     """
 }
