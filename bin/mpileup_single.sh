@@ -58,11 +58,10 @@ bcftools mpileup \
     --fasta-ref "${REF}" \
     --min-BQ "${MINBQ}" \
     --min-MQ "${MINMQ}" \
-    --regions-file "${PANEL_VCF}" \
+    --targets-file "${PANEL_VCF}" \
     ${FILTER_FLAGS} \
     --annotate FORMAT/DP,FORMAT/AD,INFO/AD \
-    --indels-cns \
-    --indel-size 110 \
+    --skip-indels \
     "${CRAM}" \
 | bcftools call \
     -Ou \

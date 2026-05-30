@@ -37,6 +37,6 @@ process MPILEUP_SINGLE {
         ${interval_hash} \
         ${panel_vcf} \
         ${cram}
-
+        
     """
 }
