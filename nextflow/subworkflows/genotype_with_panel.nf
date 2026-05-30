@@ -100,17 +100,29 @@ workflow GENOTYPE_WITH_PANEL {
         ch_genome_indexed
     )
 
-    // Concat chunked VCFs by sample
+    // Group merged chunk VCFs, then branch depending on how many chunks exist
     MERGE_VCFS.out.vcf
         .map { interval_hash, vcf, tbi -> tuple("joint", vcf, tbi) }
         .groupTuple(by: 0)
-        .set { ch_vcf_to_concat }
+        .branch { label, vcfs, tbis ->
+            concat: vcfs.size() > 1
+            single: vcfs.size() == 1
+        }
+        .set { ch_concat_choice }
 
-    CONCAT_VCFS (
-        ch_vcf_to_concat
+    // Only run concat when there is more than one chunk
+    CONCAT_VCFS(
+        ch_concat_choice.concat
     )
 
+    // If there was only one chunk, just pass it through
+    ch_single_final_vcf = ch_concat_choice.single
+        .map { label, vcfs, tbis -> tuple(label, vcfs[0], tbis[0]) }
+
+    // Final output channel: either concatenated VCF or single VCF
+    ch_final_vcf = ch_single_final_vcf.mix(CONCAT_VCFS.out.vcf)
+
     emit: 
-    vcf = CONCAT_VCFS.out.vcf
+    vcf = ch_final_vcf
 
 }
