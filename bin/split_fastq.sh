@@ -13,7 +13,11 @@ CHUNK_SIZE=$(awk -v x="${5}" 'BEGIN {printf("%d\n",x)}')
 
 # Create a file to store intervals
 INTERVALS_FILE="intervals_${2}.csv"
-touch $INTERVALS_FILE  # Create an empty file for intervals
+touch $INTERVALS_FILE
+
+# Create a file to store number of chunks
+NCHUNKS_FILE="nchunks_${2}.txt"
+touch $NCHUNKS_FILE
 
 # Calculate number of reads in forward and reverse fastqs
 N_READS=$( seqtk size $3 | cut -f1 )

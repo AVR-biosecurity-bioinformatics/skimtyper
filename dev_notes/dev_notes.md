@@ -144,7 +144,6 @@ bcftools index -t panel.vcf.gz
 Run the Qfly test dataset using the test profile
 ```
 module purge
-export NXF_VER=23.05.0-edge
 module load Java/17
 
 # Run tests on local node 
