@@ -21,7 +21,7 @@ N_READS=$( seqtk size $3 | cut -f1 )
 # if N_READS is less than CHUNK_SIZE, don't split file
 if [[ $N_READS -gt $CHUNK_SIZE ]]; then
     # calculate number of chunks
-    N_CHUNKS=$(( ( $N_READS / $CHUNK_SIZE ) + 1 ))
+    N_CHUNKS=$(( (N_READS + CHUNK_SIZE - 1) / CHUNK_SIZE ))
     # if number of chunks is larger than number of reads, throw errow
     if [[ $N_CHUNKS -gt $N_READS || $N_CHUNKS -gt 99999 ]]; then
         echo "Too many file chunks (${N_CHUNKS}) -- please lower 'params.fastq_chunk_size'"
@@ -50,5 +50,8 @@ if [[ $N_READS -gt $CHUNK_SIZE ]]; then
     done
 else
     # If only one chunk (all reads), print a single line to the file
+    N_CHUNKS=1
     echo "1,${N_READS}" > $INTERVALS_FILE
 fi
+
+echo "$N_CHUNKS" > "$NCHUNKS_FILE"
