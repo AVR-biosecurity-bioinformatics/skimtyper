@@ -35,9 +35,9 @@ workflow OUTPUTS {
     )
 
     // Run PCA on plink bed
-    PLINK_PCA (
-        PLINK_IMPORT.out.plink
-    )   
+    //PLINK_PCA (
+    //    PLINK_IMPORT.out.plink
+    //)   
 
     // Create relationship matrix from plink bed
     PLINK_REL (

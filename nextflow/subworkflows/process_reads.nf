@@ -124,7 +124,7 @@ workflow PROCESS_READS {
         .map { sample, lib, int1, int2, fcid, lane, platform, read1, read2 ->
             tuple(sample, lib, fcid, lane, platform, read1, read2, int1, int2)
         }
-        .join(ch_sample_nchunks, by: 0)
+        .combine(ch_sample_nchunks, by: 0)
         .map { sample, lib, fcid, lane, platform, read1, read2, int1, int2, n_chunks ->
             tuple(sample, n_chunks, lib, fcid, lane, platform, read1, read2, int1, int2)
         }
