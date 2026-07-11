@@ -2,11 +2,7 @@ process MERGE_VCFS {
     def process_name = "merge_vcfs"    
     publishDir "${launchDir}/output/modules/${process_name}", mode: 'copy', enabled: "${ params.debug_mode ? true : false }"
 
-    // Conditional publishing depending on what the process alias is 
-    publishDir "${launchDir}/output/results/vcf", mode: 'copy'
-
-
-    module "GATK/4.6.1.0-GCCcore-13.3.0-Java-21:BCFtools/1.21-GCC-13.3.0"
+    module "BCFtools/1.21-GCC-13.3.0"
 
     input:
     tuple val(outname), path(vcf), path(vcf_tbi)

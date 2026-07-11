@@ -10,6 +10,7 @@ include { PLINK_IMPORT                                           } from '../modu
 include { PLINK_PCA                                              } from '../modules/plink_pca' 
 include { PLINK_REL                                              } from '../modules/plink_rel' 
 include { PLINK_KING                                             } from '../modules/plink_king' 
+include { PUBLISH_VCF                                            } from '../modules/publish_vcf' 
 
 workflow OUTPUTS {
 
@@ -22,6 +23,11 @@ workflow OUTPUTS {
     /* 
         Create outputs
     */
+
+    // Publish VCF
+    PUBLISH_VCF (
+        ch_vcf
+    ) 
 
     // Create distance matrices from VCFs
     VCF2DIST (
