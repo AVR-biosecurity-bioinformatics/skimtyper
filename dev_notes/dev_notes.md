@@ -146,6 +146,8 @@ Run the Qfly test dataset using the test profile
 module purge
 module load Java/17
 
+export NXF_VER=23.05.0-edge
+
 # Run tests on local node 
 nextflow run . -profile debug,test -resume
 

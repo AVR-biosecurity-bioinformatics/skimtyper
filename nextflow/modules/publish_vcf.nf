@@ -3,7 +3,7 @@ process PUBLISH_VCF {
     publishDir "${launchDir}/output/results/vcf", mode: 'copy'
 
     input:
-    tuple val(outname), path(vcf), path(vcf_tbi)
+    tuple val(outname), path(vcf), path(tbi)
     
     output: 
     tuple path("final.vcf.gz"), path("final.vcf.gz.tbi"), emit: vcf
