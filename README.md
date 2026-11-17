@@ -1,6 +1,7 @@
 # `skimtyper`
 A low-fat nextflow-based pipeline for genotyping low coverage genome sequencing (skim sequencing) data using a reference panel VCF
 
+> [!WARNING]
 > This pipeline is currently **Experimental** and being actively developed, with no guarantee that the code is stable or usable!
 
 `skimtyper` aims to rapidly genotype skim sequencing data using a reference panel VCF, calculate relatedness between query samples, and predict their geographic and population origin for time-sensitive genomic investigations of biosecurity outbreaks.
